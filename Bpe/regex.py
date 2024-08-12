@@ -8,8 +8,10 @@ GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1
 
 class RegexTokenizer(BaseTokenizer):
 
-    def __init__(self):
+    def __init__(self, dropout=None):
         super().__init__()
+
+        self.dropout = dropout
 
         self.pattern = GPT4_SPLIT_PATTERN
         self.compiled_pattern = re.compile(self.pattern)
@@ -27,7 +29,10 @@ class RegexTokenizer(BaseTokenizer):
             # 统计子词出现的次数
             stats = {}
             for chunk_ids in ids:
-                get_stats(chunk_ids, stats)
+                if self.dropout is None:
+                    get_stats(chunk_ids, stats)
+                else:
+                    get_stats(chunk_ids, stats, self.dropout)
 
             # 统计出现次数最多的子词
             pair = max(stats, key=stats.get)
@@ -55,7 +60,7 @@ class RegexTokenizer(BaseTokenizer):
     def _encode_chunk(self, text_bytes):
         ids = list(text_bytes)
         while len(ids) >= 2:
-            stats = get_stats(ids)
+            stats = get_stats(ids, dropout=None)
             pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))
 
             if pair not in self.merges:
