@@ -1,7 +1,13 @@
-def get_stats(ids, counts=None):
+import numpy as np
+
+
+def get_stats(ids, counts=None, dropout=None):
     counts = counts if counts is not None else {}
     for pair in zip(ids, ids[1:]):
-        counts[pair] = counts.get(pair, 0) + 1
+        if dropout is not None and np.random.random() < dropout:
+            continue
+        else:
+            counts[pair] = counts.get(pair, 0) + 1
     return counts
 
 
